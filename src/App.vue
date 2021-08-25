@@ -1,28 +1,143 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <h1>Controle de Usuários</h1>
+    <div>
+      <h2>Listagem</h2>
+      <ul>
+        <li v-for="usuario in usuarios" :key="usuario._id">
+          {{ usuario.firstName }} {{ usuario.lastName }}
+        </li>
+      </ul>
+    </div>
+    <div>
+      <hr />
+      <h4>Cadastro</h4>
+      <div>
+        <label>Primeiro nome</label>
+        <input type="text" v-model="firstName" />
+      </div>
+      <div>
+        <label>Sobrenome</label>
+        <input type="text" v-model="lastName" />
+      </div>
+      <div>
+        <label>Idade</label>
+        <input type="text" v-model="age" />
+      </div>
+      <div>
+        <label>username</label>
+        <input type="text" v-model="username" />
+      </div>
+      <div>
+        <label>password</label>
+        <input type="password" v-model="password" />
+      </div>
+      <button @click="addUser">Enviar</button>
+      <p>{{ message }}</p>
+    </div>
   </div>
 </template>
-
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
-}
-</script>
+  name: "App",
+  data: function() {
+    return {
+      usuarios: [],
 
+      firstName: "",
+      lastName: "",
+      age: "",
+      username: "",
+      password: "",
+      message: "",
+    };
+  },
+  methods: {
+    getUser: async function() {
+      const result = await fetch("http://localhost:3000/")
+        .then((res) => res.json())
+        .then((res) => res)
+        .catch((error) => {
+          return {
+            error: true,
+            message: error,
+          };
+        });
+
+      if (!result.error) {
+        this.usuarios = result;
+      }
+    },
+    addUser: async function() {
+      const newUser = {
+        firstName: this.firstName,
+        lastName: this.lastName,
+        age: this.age,
+        username: this.username,
+        password: this.password,
+      };
+
+      if (newUser.firstName === "") {
+        this.message = "Primeiro nome é obrigatório";
+        return;
+      }
+      if (newUser.lastName === "") {
+        this.message = "Sobrenome é obrigatório";
+        return;
+      }
+      if (newUser.age === "") {
+        this.message = "Idade é obrigatório";
+        return;
+      }
+      if (newUser.username === "") {
+        this.message = "Usuário é obrigatório";
+        return;
+      }
+      if (newUser.password === "") {
+        this.message = "Senha é obrigatório";
+        return;
+      }
+
+      const result = await fetch("http://localhost:3000/", {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "POST",
+        body: JSON.stringify(newUser),
+      })
+        .then((res) => res.json())
+        .then((res) => res)
+        .catch((error) => {
+          return {
+            error: true,
+            message: error,
+          };
+        })
+
+        if(!result.error){
+          this.message = "Usuário cadastrado com sucesso.";
+          this.getUser();
+        }
+      console.log(result);
+    },
+  },
+  created: function() {
+    this.getUser();
+  },
+};
+</script>
 <style>
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  padding: 30px;
+}
+label {
+  display: block;
+}
+input {
+  height: 30px;
+  width: 300px;
+  margin-bottom: 30px;
 }
 </style>
