@@ -4,14 +4,18 @@
     <div>
       <h2>Listagem</h2>
       <ul>
-        <li v-for="usuario in usuarios" :key="usuario._id">
-          {{ usuario.firstName }} {{ usuario.lastName }}
+        <li v-for="user in usuarios" :key="user._id">
+          {{ user.firstName }} {{ user.lastName }}
+          <button @click="deleteUser(user._id)">Excluir</button>
+          <button @click="getUserById(user._id)">Editar</button>
         </li>
       </ul>
     </div>
     <div>
       <hr />
-      <h4>Cadastro</h4>
+      <h4 v-if="action === 'add'">Cadastro</h4>
+      <h4 v-if="action === 'uptade'">Alterar</h4>
+
       <div>
         <label>Primeiro nome</label>
         <input type="text" v-model="firstName" />
@@ -32,7 +36,9 @@
         <label>password</label>
         <input type="password" v-model="password" />
       </div>
-      <button @click="addUser">Enviar</button>
+      <button v-if="action === 'add'" @click="addUser">Enviar</button>
+      <button v-if="action === 'uptade'" @click="uptadeUser">Enviar</button>
+
       <p>{{ message }}</p>
     </div>
   </div>
@@ -50,6 +56,8 @@ export default {
       username: "",
       password: "",
       message: "",
+      action: "add",
+      userId: null,
     };
   },
   methods: {
@@ -113,12 +121,93 @@ export default {
             error: true,
             message: error,
           };
-        })
+        });
 
-        if(!result.error){
-          this.message = "Usuário cadastrado com sucesso.";
-          this.getUser();
-        }
+      if (!result.error) {
+        this.message = "Usuário cadastrado com sucesso.";
+        this.getUser();
+      }
+      console.log(result);
+    },
+    deleteUser: async function(userId) {
+      const result = await fetch("http://localhost:3000/" + userId, {
+        method: "DELETE",
+      })
+        .then((res) => res.json())
+        .catch((error) => {
+          return {
+            error: true,
+            message: error,
+          };
+        });
+
+      if (!result.error) {
+        await this.getUser();
+        this.message = "Usuário removido com sucesso";
+      }
+    },
+    getUserById: function(userId) {
+      const [usuario] = this.usuarios.filter((user) => user._id === userId);
+
+      this.firstName = usuario.firstName;
+      this.lastName = usuario.lastName;
+      this.age = usuario.age;
+      this.username = usuario.username;
+      this.password = usuario.password;
+      this.userId = usuario._id;
+      this.action = "uptade";
+    },
+    uptadeUser: async function() {
+      const newUser = {
+        firstName: this.firstName,
+        lastName: this.lastName,
+        age: this.age,
+        username: this.username,
+        password: this.password,
+      };
+
+      if (newUser.firstName === "") {
+        this.message = "Primeiro nome é obrigatório";
+        return;
+      }
+      if (newUser.lastName === "") {
+        this.message = "Sobrenome é obrigatório";
+        return;
+      }
+      if (newUser.age === "") {
+        this.message = "Idade é obrigatório";
+        return;
+      }
+      if (newUser.username === "") {
+        this.message = "Usuário é obrigatório";
+        return;
+      }
+      if (newUser.password === "") {
+        this.message = "Senha é obrigatório";
+        return;
+      }
+
+      const result = await fetch("http://localhost:3000/" + this.userId, {
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        method: "PUT",
+        body: JSON.stringify(newUser),
+      })
+        .then((res) => res.json())
+        .catch((error) => {
+          return {
+            error: true,
+            message: error,
+          };
+        });
+
+      if (!result.error) {
+        await this.getUser();
+        this.message = "Usuário alterado com sucesso!";
+      }
+
       console.log(result);
     },
   },
@@ -139,5 +228,16 @@ input {
   height: 30px;
   width: 300px;
   margin-bottom: 30px;
+}
+li {
+  height: 50px;
+  width: 400px;
+  border-bottom: 1px solid #c1c1c1;
+  padding: 10px;
+  box-sizing: border-box;
+}
+li button {
+  margin-left: 10px;
+  float: right;
 }
 </style>
